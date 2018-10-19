@@ -1,0 +1,9 @@
+/**
+ * 
+ */
+/**
+ * @author scrutton
+ *
+ */
+module MaxProfit {
+}
