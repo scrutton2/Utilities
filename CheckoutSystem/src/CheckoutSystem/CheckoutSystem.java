@@ -3,14 +3,73 @@ package CheckoutSystem;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.Locale;
 
+class ShopItem{
+	private String name;
+	private float price;
+	
+	public ShopItem(String name,float price){
+		this.name = name;
+		this.price = price;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public float getPrice() {
+		return price;
+	}
+	public void setPrice(float price) {
+		this.price = price;
+	}
+}
+
+class ShopInventory{
+   HashMap<String, Float> InventoryList = new HashMap<String, Float>();
+
+   public void buildOutStore() {
+     addItems();
+   }
+   
+   private void addItems(){
+   		// could read this from a file
+	   ShopItem aShopItem = new ShopItem("Apple", (float) 0.60);
+	   InventoryList.put(aShopItem.getName(),aShopItem.getPrice());
+
+	   ShopItem aShopItem2 = new ShopItem("Orange", (float) 0.25);
+	   InventoryList.put(aShopItem2.getName(),aShopItem2.getPrice());
+   }
+}
+
+
 public class CheckoutSystem {
 
-	static ArrayList<String> lCart 	= new ArrayList<String>();
-
+	static ArrayList<String> lCart 	= new ArrayList<String>();	// Cart contents - names of store items in cart.
 	
+	// Return cost of items in cart in pence.
+	//
+	
+	static float checkout(ShopInventory shopInv) {
+		float sum = 0;
+		String objectInCart;
+
+		ListIterator<String> li = lCart.listIterator();
+		while (li.hasNext()) {
+			objectInCart = li.next();
+			
+			if (shopInv.InventoryList.containsKey(objectInCart)) {
+				sum += shopInv.InventoryList.get(objectInCart);
+			}
+			
+		}
+		return sum;
+	}
+
 	// Return cost of items in cart in pence.
 	//
 	// Now implementing simple offers logic: 
@@ -22,7 +81,7 @@ public class CheckoutSystem {
 	// not half price like some supermarkets do on single items. Same concept for 3 for 2 also.
 	//
 	
-	static float checkout() {
+	static float checkout_discount_applied(ShopInventory shopInv) {
 		float sum = 0;
 		String objectInCart;
 
@@ -32,27 +91,32 @@ public class CheckoutSystem {
 		ListIterator<String> li = lCart.listIterator();
 		while (li.hasNext()) {
 			objectInCart = li.next();
-			if (objectInCart.equals("Apple")) {
-				if (nextApplefree) {
+			
+			if (shopInv.InventoryList.containsKey(objectInCart)) {
+
+				if (objectInCart.equals("Apple")) {
+					if (nextApplefree) {
 					// no charge
-			    	System.out.println("Buy one, get one free - Apple");
-					nextApplefree = false;
+						System.out.println("Discount - Buy one, get one free - Apple");
+						nextApplefree = false;
+					}
+					else {
+  					  sum += shopInv.InventoryList.get(objectInCart);
+  					  nextApplefree = true; // buy one get one free
+					}
 				}
-				else {
-		 			  sum += .60;
-					  nextApplefree = true; // buy one get one free
-				}
-			}
-			if (objectInCart.equals("Orange")) {
+				
+				if (objectInCart.equals("Orange")) {
   	 			    orangeGroupCount++;
                     if (orangeGroupCount<3) {
-     					sum += .25;
+        				sum += shopInv.InventoryList.get(objectInCart);
                     }
                     else {
-    			    	System.out.println("Get 3rd item free after buying 2 - Orange");
+    			    	System.out.println("Discount - Get 3rd item free after buying 2 - Orange");
                     	orangeGroupCount = 0;
                     }
-			}
+				}
+			}			
 		}
 		return sum;
 	}
@@ -60,30 +124,38 @@ public class CheckoutSystem {
 
 	public static void addToCart(String ...s) {
 		for (String a : s) {
-			lCart.add(a);
+			lCart.add(a);			// stores cart contents in a list
 		}
 	}
 	
     public static void main(String[] args) {
 
-    	System.out.println("Start of program");
-
-// Testing the logic
-//    	addToCart("Apple","Apple","Apple"); // apples(3) = 1.20 (1 free)
-//    	addToCart("Orange","Orange","Orange","Orange"); // 0.75 (1 free)
-//    	addToCart("Orange","Orange","Orange","Orange","Orange","Orange"); // 1.00
-//    	addToCart("Orange","Orange","Orange","Orange","Orange","Orange","Orange"); // 1.25
- 
-    	addToCart("Apple","Apple","Orange","Apple","Orange","Orange","Orange"); // apples(3) = 1.20 (1 free), oranges(4) = 0.75 (1 free) = 1.95
-
-    	float sum = checkout();
+    	// Build out the shop inventory
+    	// 
+    	ShopInventory shopInv = new ShopInventory();
+    	shopInv.buildOutStore();
 
     	NumberFormat GBP = NumberFormat.getCurrencyInstance(Locale.UK);
-    	
-    	System.out.println("Price of cart contents: " + GBP.format(sum));
-    		
-    	System.out.println("objects checked out");
 
+
+    	// Add Items to cart
+    	//
+    	// Expected results:
+    	// full pricing 
+    	// apples(3) = 1.80 oranges (4) = 1.00 Total = 2.80
+    	//
+    	// discounted pricing
+    	// apples(3) = 1.20 (1 free), oranges(4) = 0.75 (1 free) Total = 1.95
+    	addToCart("Apple","Apple","Orange","Apple","Orange","Orange","Orange");
+
+    	float sum = checkout(shopInv);
+    	System.out.println("Full pricing. Price of cart contents: " + GBP.format(sum));
+    		
+    	System.out.println("\nDiscount applied.");
+    	
+    	float sum2 = checkout_discount_applied(shopInv);
+    	System.out.println("Price of cart contents: " + GBP.format(sum2));
+    		
     }
     
 }
